@@ -66,8 +66,13 @@ class RegistersMap:
 
 
     @property
-    def address_name_values(self, as_hex = True):
-        return sorted([(reg.address, reg.name, hex(reg.value) if as_hex else reg.value) for reg in self._registers])
+    def address_name_values(self):
+        return sorted([(reg.address, reg.name, reg.value) for reg in self._registers])
+
+
+    @property
+    def addressed_values(self):
+        return sorted([(reg.address, reg.value) for reg in self._registers])
 
 
     def load_values(self, addressed_values):

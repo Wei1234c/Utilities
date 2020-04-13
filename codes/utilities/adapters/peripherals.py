@@ -28,6 +28,8 @@ try:
 except:
     from shift_register import ShiftRegister
 
+VIRTUAL_DEVICE_WARNING = '****** Virtual device. Data may not be real ! ******'
+
 
 
 class Mock:
@@ -92,6 +94,8 @@ class SPI:
                 self._write = self._spi.writebytes
             elif IS_MICROPYTHON or IS_PC:
                 self._write = self._spi.write
+        else:
+            print(VIRTUAL_DEVICE_WARNING)
 
 
     def write(self, bytes_array):
@@ -175,6 +179,8 @@ class I2C:
                 self._read_byte = lambda reg_address: self._i2c.readfrom_mem(self.address, reg_address, 1)[0]
                 self._write_byte = lambda reg_address, value: self._i2c.writeto_mem(self.address, reg_address,
                                                                                     bytearray([value]))
+        else:
+            print(VIRTUAL_DEVICE_WARNING)
 
 
     def write_byte(self, reg_address, value):
@@ -185,8 +191,7 @@ class I2C:
     def read_byte(self, reg_address):
         if self._i2c is not None:
             return self._read_byte(reg_address)
-        else:
-            return 0
+        return 0
 
 
     @classmethod
