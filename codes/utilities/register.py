@@ -75,14 +75,60 @@ class RegistersMap:
         return sorted([(reg.address, reg.value) for reg in self._registers])
 
 
-    def load_values(self, addressed_values):
-        for (address, value) in addressed_values:
-            self.registers_by_address[address].load_value(value)
-
-
     def load_values_by_name(self, named_values):
         for (reg_name, value) in named_values:
             self.registers[reg_name].load_value(value)
+
+
+    def load_values(self, addressed_values):
+        for (address, value) in addressed_values:
+            try:
+                self.registers_by_address[address].load_value(value)
+            except KeyError as e:
+                print('There is no register as address {}.'.format(e))
+
+
+    def read_file(self, file_name):
+        addressed_values = []
+
+        with open(file_name) as f:
+            lines = f.readlines()
+
+            for line in lines:
+                if not line.startswith('#'):
+                    address, value = line.replace('h', '').split(',')
+                    addressed_values.append((int(address), int(value, 16)))
+
+        return addressed_values
+
+
+    def load_file(self, file_name):
+        self.load_values(self.read_file(file_name))
+
+
+    def save_to_file(self, file_name):
+        with open(file_name, 'wt') as f:
+            for address, value in self.addressed_values:
+                f.write('{}, {}\n'.format(address, hex(value)))
+
+
+    def compare_values_sets(self, set_1, set_2):
+        import numpy as np
+
+        address_max = max([a for a, _ in set_1] + [a for a, _ in set_2])
+        addresses = range(address_max + 1)
+
+        comparison = np.full((4, len(addresses)), np.nan)
+        comparison[0] = addresses
+
+        for i in range(2):
+            for a, v in (set_1, set_2)[i]:
+                comparison[i + 1, a] = v
+
+        comparison = np.delete(comparison, np.argwhere(np.isnan(comparison[1]) & np.isnan(comparison[2])), axis = 1)
+        comparison[-1] = (comparison[1] != comparison[2])
+
+        return comparison.T
 
 
     def reset(self):
