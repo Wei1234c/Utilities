@@ -19,7 +19,6 @@ try:
 
     GPIO_PORT = GpioController()
 except Exception as e:
-    print(e)
     if not isinstance(e, ImportError):
         print(e)
 
@@ -173,8 +172,9 @@ class I2C:
 
         if self._i2c is not None:
             if IS_RPi:
-                self._write = self._i2c.writebytes
-
+                self._read_byte = lambda reg_address: self._i2c.read_byte_data(self.address, reg_address)
+                self._write_byte = lambda reg_address, value: self._i2c.write_byte_data(self.address, reg_address,
+                                                                                        value)
             elif IS_MICROPYTHON or IS_PC:
                 self._read_byte = lambda reg_address: self._i2c.readfrom_mem(self.address, reg_address, 1)[0]
                 self._write_byte = lambda reg_address, value: self._i2c.writeto_mem(self.address, reg_address,
@@ -198,8 +198,7 @@ class I2C:
     def get_uPy_i2c(cls, id = -1, scl_pin_id = 5, sda_pin_id = 4, freq = 400000):
         import machine
 
-        return machine.I2C(id = id,
-                           scl = machine.Pin(scl_pin_id, machine.Pin.OUT),
+        return machine.I2C(scl = machine.Pin(scl_pin_id, machine.Pin.OUT),
                            sda = machine.Pin(sda_pin_id),
                            freq = freq)
 
