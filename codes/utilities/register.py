@@ -271,6 +271,12 @@ class Element:
             self._value = value
 
 
+    @classmethod
+    def section_value(cls, value, idx_lowest_bit, n_bits):
+        mask = (2 ** n_bits - 1) << idx_lowest_bit
+        return (value & mask) >> idx_lowest_bit
+
+
     @property
     def mask(self):
         return (2 ** self.n_bits - 1) << self.idx_lowest_bit
