@@ -27,7 +27,7 @@ try:
 except:
     from shift_register import ShiftRegister
 
-VIRTUAL_DEVICE_WARNING = '****** Virtual device. Data may not be real ! ******'
+VIRTUAL_DEVICE_WARNING = '\n****** Virtual device. Data may not be real ! ******\n'
 
 
 
