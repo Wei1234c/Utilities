@@ -24,6 +24,14 @@ class RegistersMap:
         return self._registers_dict
 
 
+    @registers.setter
+    def registers(self, registers):
+        self._registers = registers or []
+        self._registers_dict = _elements_by_attr(self._registers, 'name')
+        self._registers_by_address = _elements_by_attr(self._registers, 'address')
+        self._elements = {e.name: {'element': e, 'register': reg} for reg in self._registers for e in reg._elements}
+
+
     @property
     def registers_by_address(self):
         return self._registers_by_address
@@ -50,14 +58,6 @@ class RegistersMap:
         register = d['register']
         element.value = value
         return register, element
-
-
-    @registers.setter
-    def registers(self, registers):
-        self._registers = registers or []
-        self._registers_dict = _elements_by_attr(self._registers, 'name')
-        self._registers_by_address = _elements_by_attr(self._registers, 'address')
-        self._elements = {e.name: {'element': e, 'register': reg} for reg in self._registers for e in reg._elements}
 
 
     @property
