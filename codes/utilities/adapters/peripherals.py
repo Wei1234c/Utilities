@@ -88,13 +88,18 @@ class SPI:
         self._ss = ss
         self._ss_polarity = ss_polarity
 
-        if self._spi is not None:
+        if self.is_virtual_device:
+            print(VIRTUAL_DEVICE_WARNING)
+        else:
             if IS_RPi:
                 self._write = self._spi.writebytes
             elif IS_MICROPYTHON or IS_PC:
                 self._write = self._spi.write
-        else:
-            print(VIRTUAL_DEVICE_WARNING)
+
+
+    @property
+    def is_virtual_device(self):
+        return self._spi is None
 
 
     def write(self, bytes_array):
@@ -170,7 +175,9 @@ class I2C:
         self._i2c = i2c
         self.address = address
 
-        if self._i2c is not None:
+        if self.is_virtual_device:
+            print(VIRTUAL_DEVICE_WARNING)
+        else:
             if IS_RPi:
                 self._read_byte = lambda reg_address: self._i2c.read_byte_data(self.address, reg_address)
                 self._write_byte = lambda reg_address, value: self._i2c.write_byte_data(self.address, reg_address,
@@ -179,8 +186,11 @@ class I2C:
                 self._read_byte = lambda reg_address: self._i2c.readfrom_mem(self.address, reg_address, 1)[0]
                 self._write_byte = lambda reg_address, value: self._i2c.writeto_mem(self.address, reg_address,
                                                                                     bytearray([value]))
-        else:
-            print(VIRTUAL_DEVICE_WARNING)
+
+
+    @property
+    def is_virtual_device(self):
+        return self._i2c is None
 
 
     def write_byte(self, reg_address, value):

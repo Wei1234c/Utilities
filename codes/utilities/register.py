@@ -42,6 +42,10 @@ class RegistersMap:
         return self._elements
 
 
+    def value_of_element(self, element_name):
+        return self.elements[element_name]['element'].value
+
+
     def register_address_of_element(self, element_name):
         return self.elements[element_name]['register'].address
 
@@ -129,6 +133,25 @@ class RegistersMap:
         comparison[-1] = (comparison[1] != comparison[2])
 
         return comparison.T
+
+
+    def compare_values_sets_pd(self, set_1, set_2):
+        import pandas as pd
+
+        registers_names = pd.DataFrame([(address, name) for (address, name, _) in self.address_name_values],
+                                       columns = ['address', 'register_name'])
+        df_1 = pd.DataFrame(set_1, columns = ['address', 'value'])
+        df_2 = pd.DataFrame(set_2, columns = ['address', 'value'])
+
+        df = pd.merge(registers_names, df_1, how = 'outer', on = ['address'])
+        df = pd.merge(df, df_2, how = 'outer', on = ['address'], suffixes = ('_1', '_2'))
+
+        df.drop(df.index[pd.isna(df.value_1) & pd.isna(df.value_2)], inplace = True)
+        df['different'] = (df.value_1 != df.value_2).astype(int)
+        df.sort_values(by = ['address'], inplace = True)
+        df.index = range(len(df))
+
+        return df
 
 
     def reset(self):
