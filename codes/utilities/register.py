@@ -138,17 +138,16 @@ class RegistersMap:
     def compare_values_sets_pd(self, set_1, set_2):
         import pandas as pd
 
-        registers_names = pd.DataFrame([(address, name) for (address, name, _) in self.address_name_values],
-                                       columns = ['address', 'register_name'])
-        df_1 = pd.DataFrame(set_1, columns = ['address', 'value'])
-        df_2 = pd.DataFrame(set_2, columns = ['address', 'value'])
+        self.load_values(set_1)
+        df1 = self.df
 
-        df = pd.merge(registers_names, df_1, how = 'outer', on = ['address'])
-        df = pd.merge(df, df_2, how = 'outer', on = ['address'], suffixes = ('_1', '_2'))
+        self.load_values(set_2)
+        df2 = self.df
 
-        df.drop(df.index[pd.isna(df.value_1) & pd.isna(df.value_2)], inplace = True)
-        df['different'] = (df.value_1 != df.value_2).astype(int)
-        df.sort_values(by = ['address'], inplace = True)
+        df = pd.merge(df1, df2, how = 'outer', on = ['address', 'element_name'], suffixes = ('', '_2'))
+        df = df[['register', 'address', 'default_value', 'element_name', 'idx_lowest_bit', 'n_bits', 'read_only',
+                 'value', 'value_2']]
+        df['different'] = (df.value != df.value_2).astype(int)
         df.index = range(len(df))
 
         return df
@@ -180,6 +179,16 @@ class RegistersMap:
              'registers'  : [json.loads(r.dumps()) for r in self._registers]}
 
         return json.dumps(d)
+
+
+    @property
+    def df(self):
+        import pandas as pd
+
+        df = pd.concat([r.df for r in self._registers])
+        df.index = range(len(df))
+
+        return df
 
 
 
@@ -267,6 +276,25 @@ class Register:
              'elements'     : [json.loads(e.dumps()) for e in self._elements]}
 
         return json.dumps(d)
+
+
+    @property
+    def df(self):
+        import pandas as pd
+
+        reg_dict = json.loads(self.dumps())
+        df = pd.DataFrame(reg_dict['elements'])
+
+        df['register'] = reg_dict['name']
+        df['address'] = reg_dict['address']
+        df['default_value'] = reg_dict['default_value']
+        df['register_description'] = reg_dict['description']
+
+        df = df[['register', 'address', 'default_value', 'register_description',
+                 'name', 'description', 'idx_lowest_bit', 'n_bits', 'value', 'read_only']]
+        df.rename(columns = {'name': 'element_name'}, inplace = True)
+
+        return df
 
 
 
