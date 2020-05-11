@@ -78,33 +78,63 @@ class Pin:
 
 
 
-class SPI:
+class Bus:
+    DEBUG_MODE = False
+
+
+    def __init__(self, bus):
+        self._bus = bus
+
+        if self.is_virtual_device:
+            print(VIRTUAL_DEVICE_WARNING)
+        else:
+            self.init()
+
+
+    def init(self):
+        if IS_RPi:
+            raise NotImplementedError()
+        elif IS_MICROPYTHON:
+            raise NotImplementedError()
+        elif IS_PC:
+            raise NotImplementedError()
+
+
+    @property
+    def is_virtual_device(self):
+        return self._bus is None
+
+
+    def write(self, bytes_array):
+        raise NotImplementedError()
+
+
+    def read(self, n_bytes):
+        raise NotImplementedError()
+
+
+
+class SPI(Bus):
     SPI_MSB = 0
     SPI_LSB = 1
 
 
     def __init__(self, spi, ss, ss_polarity = 1):
-        self._spi = spi
         self._ss = ss
         self._ss_polarity = ss_polarity
-
-        if self.is_virtual_device:
-            print(VIRTUAL_DEVICE_WARNING)
-        else:
-            if IS_RPi:
-                self._write = self._spi.writebytes
-            elif IS_MICROPYTHON or IS_PC:
-                self._write = self._spi.write
+        super().__init__(bus = spi)
 
 
-    @property
-    def is_virtual_device(self):
-        return self._spi is None
+    def init(self):
+        if IS_RPi:
+            self._write = self._bus.writebytes
+        elif IS_MICROPYTHON or IS_PC:
+            self._write = self._bus.write
 
 
     def write(self, bytes_array):
 
-        if self._spi is not None:
+        if not self.is_virtual_device:
 
             if self._ss_polarity == 0:
                 self._ss.low()
@@ -167,41 +197,33 @@ class SPI:
 
 
 
-class I2C:
-    DEBUG_MODE = False
+class I2C(Bus):
+
+    def __init__(self, i2c):
+        super().__init__(bus = i2c)
 
 
-    def __init__(self, i2c, address):
-        self._i2c = i2c
-        self.address = address
-
-        if self.is_virtual_device:
-            print(VIRTUAL_DEVICE_WARNING)
-        else:
-            if IS_RPi:
-                self._read_byte = lambda reg_address: self._i2c.read_byte_data(self.address, reg_address)
-                self._write_byte = lambda reg_address, value: self._i2c.write_byte_data(self.address, reg_address,
-                                                                                        value)
-            elif IS_MICROPYTHON or IS_PC:
-                self._read_byte = lambda reg_address: self._i2c.readfrom_mem(self.address, reg_address, 1)[0]
-                self._write_byte = lambda reg_address, value: self._i2c.writeto_mem(self.address, reg_address,
-                                                                                    bytearray([value]))
+    def init(self):
+        if IS_RPi:
+            self._read_byte = lambda i2c_address, reg_address: self._bus.read_byte_data(i2c_address, reg_address)
+            self._write_byte = lambda i2c_address, reg_address, value: self._bus.write_byte_data(i2c_address,
+                                                                                                 reg_address,
+                                                                                                 value)
+        elif IS_MICROPYTHON or IS_PC:
+            self._read_byte = lambda i2c_address, reg_address: self._bus.readfrom_mem(i2c_address, reg_address, 1)[0]
+            self._write_byte = lambda i2c_address, reg_address, value: self._bus.writeto_mem(i2c_address, reg_address,
+                                                                                             bytearray([value]))
 
 
-    @property
-    def is_virtual_device(self):
-        return self._i2c is None
-
-
-    def write_byte(self, reg_address, value):
-        if self._i2c is not None:
-            return self._write_byte(reg_address, value)
-
-
-    def read_byte(self, reg_address):
-        if self._i2c is not None:
-            return self._read_byte(reg_address)
+    def read_byte(self, i2c_address, reg_address):
+        if not self.is_virtual_device:
+            return self._read_byte(i2c_address, reg_address)
         return 0
+
+
+    def write_byte(self, i2c_address, reg_address, value):
+        if not self.is_virtual_device:
+            return self._write_byte(i2c_address, reg_address, value)
 
 
     @classmethod
