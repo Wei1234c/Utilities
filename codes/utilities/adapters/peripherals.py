@@ -205,25 +205,25 @@ class I2C(Bus):
 
     def init(self):
         if IS_RPi:
-            self._read_byte = lambda i2c_address, reg_address: self._bus.read_byte_data(i2c_address, reg_address)
-            self._write_byte = lambda i2c_address, reg_address, value: self._bus.write_byte_data(i2c_address,
+            self._read_addressed_byte = lambda i2c_address, reg_address: self._bus.read_byte_data(i2c_address, reg_address)
+            self._write_addressed_byte = lambda i2c_address, reg_address, value: self._bus.write_byte_data(i2c_address,
                                                                                                  reg_address,
                                                                                                  value)
         elif IS_MICROPYTHON or IS_PC:
-            self._read_byte = lambda i2c_address, reg_address: self._bus.readfrom_mem(i2c_address, reg_address, 1)[0]
-            self._write_byte = lambda i2c_address, reg_address, value: self._bus.writeto_mem(i2c_address, reg_address,
+            self._read_addressed_byte = lambda i2c_address, reg_address: self._bus.readfrom_mem(i2c_address, reg_address, 1)[0]
+            self._write_addressed_byte = lambda i2c_address, reg_address, value: self._bus.writeto_mem(i2c_address, reg_address,
                                                                                              bytearray([value]))
 
 
-    def read_byte(self, i2c_address, reg_address):
+    def read_addressed_byte(self, i2c_address, reg_address):
         if not self.is_virtual_device:
-            return self._read_byte(i2c_address, reg_address)
+            return self._read_addressed_byte(i2c_address, reg_address)
         return 0
 
 
-    def write_byte(self, i2c_address, reg_address, value):
+    def write_addressed_byte(self, i2c_address, reg_address, value):
         if not self.is_virtual_device:
-            return self._write_byte(i2c_address, reg_address, value)
+            return self._write_addressed_byte(i2c_address, reg_address, value)
 
 
     @classmethod
