@@ -205,14 +205,34 @@ class I2C(Bus):
 
     def init(self):
         if IS_RPi:
-            self._read_addressed_byte = lambda i2c_address, reg_address: self._bus.read_byte_data(i2c_address, reg_address)
-            self._write_addressed_byte = lambda i2c_address, reg_address, value: self._bus.write_byte_data(i2c_address,
-                                                                                                 reg_address,
-                                                                                                 value)
+
+            self._read_addressed_byte = \
+                lambda i2c_address, reg_address: self._bus.read_byte_data(i2c_address, reg_address)
+            self._write_addressed_byte = \
+                lambda i2c_address, reg_address, value: self._bus.write_byte_data(i2c_address, reg_address, value)
+
+            # not sure how to implement read_bytes / write_bytes on RPi.
+
         elif IS_MICROPYTHON or IS_PC:
-            self._read_addressed_byte = lambda i2c_address, reg_address: self._bus.readfrom_mem(i2c_address, reg_address, 1)[0]
-            self._write_addressed_byte = lambda i2c_address, reg_address, value: self._bus.writeto_mem(i2c_address, reg_address,
-                                                                                             bytearray([value]))
+            self._read_addressed_byte = \
+                lambda i2c_address, reg_address: self._bus.readfrom_mem(i2c_address, reg_address, 1)[0]
+            self._write_addressed_byte = \
+                lambda i2c_address, reg_address, value: self._bus.writeto_mem(i2c_address, reg_address,
+                                                                              bytearray([value]))
+
+            self._read_bytes = lambda i2c_address, n_bytes: self._bus.readfrom(i2c_address, n_bytes)
+            self._write_bytes = lambda i2c_address, bytes_array: self._bus.writeto(i2c_address, bytes_array)
+
+
+    def read_bytes(self, i2c_address, n_bytes):
+        if not self.is_virtual_device:
+            return self._read_bytes(i2c_address, n_bytes)
+        return bytearray([0] * n_bytes)
+
+
+    def write_bytes(self, i2c_address, bytes_array):
+        if not self.is_virtual_device:
+            return self._write_bytes(i2c_address, bytes_array)
 
 
     def read_addressed_byte(self, i2c_address, reg_address):
