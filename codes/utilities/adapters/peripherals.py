@@ -1,6 +1,8 @@
 import os
 import sys
 
+from array import array
+
 
 try:
     machine_name = os.uname().machine
@@ -218,7 +220,7 @@ class I2C(Bus):
                 lambda i2c_address, reg_address: self._bus.readfrom_mem(i2c_address, reg_address, 1)[0]
             self._write_addressed_byte = \
                 lambda i2c_address, reg_address, value: self._bus.writeto_mem(i2c_address, reg_address,
-                                                                              bytearray([value]))
+                                                                              array('B', [value]))
 
             self._read_bytes = lambda i2c_address, n_bytes: self._bus.readfrom(i2c_address, n_bytes)
             self._write_bytes = lambda i2c_address, bytes_array: self._bus.writeto(i2c_address, bytes_array)
@@ -227,7 +229,25 @@ class I2C(Bus):
     def read_bytes(self, i2c_address, n_bytes):
         if not self.is_virtual_device:
             return self._read_bytes(i2c_address, n_bytes)
-        return bytearray([0] * n_bytes)
+        return array('B', [0] * n_bytes)
+
+
+    def read_byte(self, i2c_address):
+        return self.read_bytes(i2c_address = i2c_address, n_bytes = 1)[0]
+
+
+    def read_addressed_bytes(self, i2c_address, reg_address, n_bytes):
+        if not self.is_virtual_device:
+            self.write_byte(i2c_address = i2c_address, value = reg_address)
+            return self.read_bytes(i2c_address = i2c_address, n_bytes = n_bytes)
+
+        return array('B', [0] * n_bytes)
+
+
+    def read_addressed_byte(self, i2c_address, reg_address):
+        if not self.is_virtual_device:
+            return self._read_addressed_byte(i2c_address, reg_address)
+        return 0
 
 
     def write_bytes(self, i2c_address, bytes_array):
@@ -235,10 +255,19 @@ class I2C(Bus):
             return self._write_bytes(i2c_address, bytes_array)
 
 
-    def read_addressed_byte(self, i2c_address, reg_address):
+    def write_byte(self, i2c_address, value):
+        return self.write_bytes(i2c_address = i2c_address, bytes_array = array('B', [value]))
+
+
+    def write_addressed_bytes(self, i2c_address, reg_address, bytes_array):
+        n_bytes = len(bytes_array)
+
         if not self.is_virtual_device:
-            return self._read_addressed_byte(i2c_address, reg_address)
-        return 0
+            ba = array('B', [reg_address])
+            ba.extend(bytes_array)
+            self.write_bytes(i2c_address = i2c_address, bytes_array = ba)
+
+        return n_bytes
 
 
     def write_addressed_byte(self, i2c_address, reg_address, value):
