@@ -7,6 +7,7 @@ from array import array
 def _elements_by_attr(elements, attr):
     keyed_elements = {getattr(e, attr): e for e in elements}
     assert len(list(keyed_elements.keys())) == len(elements), '{} are not unique.'.format(attr)
+
     return keyed_elements
 
 
@@ -40,6 +41,17 @@ class RegistersMap:
     @property
     def elements(self):
         return self._elements
+
+
+    @property
+    def duplicated_element_names(self):
+        elements_names = [ele.name for reg in self._registers for ele in reg._elements]
+        return list((n for n in set(elements_names) if elements_names.count(n) > 1))
+
+
+    @property
+    def has_same_name_elements(self):
+        return len(self.duplicated_element_names) > 0
 
 
     def value_of_element(self, element_name):
