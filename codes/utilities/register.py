@@ -19,6 +19,9 @@ class RegistersMap:
         self.description = description
         self.registers = registers
 
+        elements_names = [ele.name for reg in self._registers for ele in reg._elements]
+        self.duplicated_element_names = tuple(sorted(n for n in set(elements_names) if elements_names.count(n) > 1))
+
 
     @property
     def registers(self):
@@ -41,12 +44,6 @@ class RegistersMap:
     @property
     def elements(self):
         return self._elements
-
-
-    @property
-    def duplicated_element_names(self):
-        elements_names = [ele.name for reg in self._registers for ele in reg._elements]
-        return list((n for n in set(elements_names) if elements_names.count(n) > 1))
 
 
     @property
