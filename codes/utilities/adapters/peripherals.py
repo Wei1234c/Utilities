@@ -224,6 +224,7 @@ class I2C(Bus):
 
             self._read_bytes = lambda i2c_address, n_bytes: self._bus.readfrom(i2c_address, n_bytes)
             self._write_bytes = lambda i2c_address, bytes_array: self._bus.writeto(i2c_address, bytes_array)
+            self.writeto = self._bus.writeto
 
 
     def read_bytes(self, i2c_address, n_bytes):
