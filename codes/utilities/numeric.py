@@ -1,83 +1,48 @@
 # Signed values are converted with two's compliment.
+# https://en.wikipedia.org/wiki/Single-precision_floating-point_format
+# https://en.wikipedia.org/wiki/Single-precision_floating-point_format
+# https://docs.python.org/3/library/struct.html
+
 from math import ceil
 
 
 
 class Number:
+    N_BITS_A = 9
+    N_BITS_B = 23
+    LIMIT = 1 << (N_BITS_A - 1)
 
-    # https://en.wikipedia.org/wiki/Single-precision_floating-point_format
+    N_BITS = N_BITS_A + N_BITS_B
+    N_BITS_INTEGER = N_BITS_A
+    N_BYTES = ceil(N_BITS / 8)
+    INT_FORMAT = (N_BITS, 0)
+    FLOAT_FORMAT = (N_BITS_INTEGER, N_BITS - N_BITS_INTEGER)
 
-    def __init__(self, value):
-        self.value = value
+
+    def __init__(self, value, n_bits_A = None, n_bits_B = None):
+        self.n_bits_A = self.N_BITS_A if n_bits_A is None else n_bits_A
+        self.n_bits_B = self.N_BITS_B if n_bits_B is None else n_bits_B
+        self.limit_guard(value, self.n_bits_A)
+
+        self.set_value(value)
 
 
-    @property
-    def type(self):
-        return type(self.value)
+    def set_value(self, value):
+        cased_value = self.type(value)
+
+        if cased_value != value:
+            print(f'Warning: {value} is truncated to {cased_value}.')
+            assert isinstance(value, self.type), f'{value} needs to be type {self.type}'
+
+        else:
+            self._value = cased_value
+            return self
 
 
     @classmethod
     def limit_guard(cls, value, n_bits):
         limit = 1 << (n_bits - 1)
         assert - limit <= value < limit, f'Need {-limit} <= value < {limit}, current: {value}'
-
-
-    @classmethod
-    def from_bits(cls, bits):
-        raise NotImplementedError
-
-
-    @classmethod
-    def from_bytes(cls, value_bytes):
-        raise NotImplementedError
-
-
-    @classmethod
-    def bits_to_value(cls, bits):
-        raise NotImplementedError
-
-
-    @classmethod
-    def bytes_to_value(cls, value_bytes):
-        raise NotImplementedError
-
-
-    @classmethod
-    def to_bits(cls, value):
-        raise NotImplementedError
-
-
-    @classmethod
-    def to_bytes(cls, value):
-        raise NotImplementedError
-
-
-    @property
-    def bits(self):
-        return self.to_bits(self.value)
-
-
-    @property
-    def bytes(self):
-        return self.to_bytes(self.value)
-
-
-
-class Float(Number):
-    # https://en.wikipedia.org/wiki/Single-precision_floating-point_format
-    # https://docs.python.org/3/library/struct.html
-
-    N_BITS_A = 9
-    N_BITS_B = 23
-    LIMIT = 1 << (N_BITS_A - 1)
-
-
-    def __init__(self, value, n_bits_A = None, n_bits_B = None):
-        super().__init__(value)
-        self._n_bits_A = n_bits_A or self.N_BITS_A
-        self._n_bits_B = n_bits_B or self.N_BITS_B
-
-        self.limit_guard(value, self._n_bits_A)
 
 
     @classmethod
@@ -92,15 +57,17 @@ class Float(Number):
 
     @classmethod
     def bits_to_value(cls, bits, n_bits_A = None, n_bits_B = None):
-        n_bits_A = n_bits_A or cls.N_BITS_A
-        n_bits_B = n_bits_B or cls.N_BITS_B
+        n_bits_A = cls.N_BITS_A if n_bits_A is None else n_bits_A
+        n_bits_B = cls.N_BITS_B if n_bits_B is None else n_bits_B
 
         sign_mask = 1 << (n_bits_A + n_bits_B - 1)
         denominator = 1 << n_bits_B
         numerator = (bits & (sign_mask - 1)) - \
                     (bits & (sign_mask - 0))
 
-        return numerator / denominator
+        num_type = int if n_bits_B == 0 else float
+
+        return num_type(numerator / denominator)
 
 
     @classmethod
@@ -111,8 +78,8 @@ class Float(Number):
 
     @classmethod
     def to_bits(cls, value, n_bits_A = None, n_bits_B = None):
-        n_bits_A = n_bits_A or cls.N_BITS_A
-        n_bits_B = n_bits_B or cls.N_BITS_B
+        n_bits_A = cls.N_BITS_A if n_bits_A is None else n_bits_A
+        n_bits_B = cls.N_BITS_B if n_bits_B is None else n_bits_B
 
         cls.limit_guard(value, n_bits_A)
 
@@ -124,8 +91,8 @@ class Float(Number):
 
     @classmethod
     def to_bytes(cls, value, n_bits_A = None, n_bits_B = None):
-        n_bits_A = n_bits_A or cls.N_BITS_A
-        n_bits_B = n_bits_B or cls.N_BITS_B
+        n_bits_A = cls.N_BITS_A if n_bits_A is None else n_bits_A
+        n_bits_B = cls.N_BITS_B if n_bits_B is None else n_bits_B
 
         bits = cls.to_bits(value, n_bits_A, n_bits_B)
         return bits.to_bytes(length = ceil((n_bits_A + n_bits_B) / 8),
@@ -134,17 +101,43 @@ class Float(Number):
 
 
     @property
+    def value(self):
+        cased_value = self.type(self._value)
+
+        if cased_value != self._value:
+            print(f'Warning: {self._value} is truncated to {cased_value}.')
+
+        self._value = cased_value
+        return self._value
+
+
+    @property
+    def type(self):
+        return int if self.n_bits_B == 0 else float
+
+
+    @property
     def bits(self):
-        return self.to_bits(self.value, self._n_bits_A, self._n_bits_B)
+        return self.to_bits(self.value, self.n_bits_A, self.n_bits_B)
 
 
     @property
     def bytes(self):
-        return self.to_bytes(self.value, self._n_bits_A, self._n_bits_B)
+        return self.to_bytes(self.value, self.n_bits_A, self.n_bits_B)
+
+
+    @property
+    def size(self):
+        return len(self.bytes)
 
 
 
-class SignedInteger(Float):
+class Float(Number):
+    pass
+
+
+
+class SignedInteger(Number):
     N_BITS_A = 32
     N_BITS_B = 0
     LIMIT = 1 << (N_BITS_A - 1)
