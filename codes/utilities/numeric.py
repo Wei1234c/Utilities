@@ -116,6 +116,18 @@ class Number:
         return int if self.n_bits_B == 0 else float
 
 
+    def to_integer(self):
+        self._value = int(self.value)
+        self.n_bits_A = self.n_bits_A + self.n_bits_B
+        self.n_bits_B = 0
+
+
+    def to_float(self):
+        self._value = float(self.value)
+        self.n_bits_A = self.N_BITS_A
+        self.n_bits_B = self.N_BITS_B
+
+
     @property
     def bits(self):
         return self.to_bits(self.value, self.n_bits_A, self.n_bits_B)
