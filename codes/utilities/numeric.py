@@ -72,8 +72,8 @@ class Number:
 
     @classmethod
     def bytes_to_value(cls, AB_bytes, n_bits_A = None, n_bits_B = None):
-        # bits = int.from_bytes(AB_bytes, 'big')  # for MicroPython
-        bits = int.from_bytes(AB_bytes, byteorder = 'big', signed = False)
+        bits = int.from_bytes(AB_bytes, 'big')  # for MicroPython
+        # bits = int.from_bytes(AB_bytes, byteorder = 'big', signed = False)
         return cls.bits_to_value(bits, n_bits_A, n_bits_B)
 
 
@@ -97,10 +97,10 @@ class Number:
 
         bits = cls.to_bits(value, n_bits_A, n_bits_B)
 
-        # return bits.to_bytes(ceil((n_bits_A + n_bits_B) / 8), 'big')  # for MicroPython
-        return bits.to_bytes(length = ceil((n_bits_A + n_bits_B) / 8),
-                             byteorder = 'big',
-                             signed = False)
+        return bits.to_bytes(ceil((n_bits_A + n_bits_B) / 8), 'big')  # for MicroPython
+        # return bits.to_bytes(length = ceil((n_bits_A + n_bits_B) / 8),
+        #                      byteorder = 'big',
+        #                      signed = False)
 
 
     @property
