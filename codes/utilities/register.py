@@ -192,12 +192,17 @@ class RegistersMap:
 
     @property
     def df(self):
-        import pandas as pd
 
-        df = pd.concat([r.df for r in self._registers])
-        df.index = range(len(df))
+        try:
+            import pandas as pd
 
-        return df
+            df = pd.concat([r.df for r in self._registers])
+            df.index = range(len(df))
+
+            return df
+
+        except ImportError:
+            print('Need Pandas.')
 
 
 
@@ -289,21 +294,26 @@ class Register:
 
     @property
     def df(self):
-        import pandas as pd
 
-        reg_dict = json.loads(self.dumps())
-        df = pd.DataFrame(reg_dict['elements'])
+        try:
+            import pandas as pd
 
-        df['register'] = reg_dict['name']
-        df['address'] = reg_dict['address']
-        df['default_value'] = reg_dict['default_value']
-        df['register_description'] = reg_dict['description']
+            reg_dict = json.loads(self.dumps())
+            df = pd.DataFrame(reg_dict['elements'])
 
-        df = df[['register', 'address', 'default_value', 'register_description',
-                 'name', 'description', 'idx_lowest_bit', 'n_bits', 'value', 'read_only']]
-        df.rename(columns = {'name': 'element_name'}, inplace = True)
+            df['register'] = reg_dict['name']
+            df['address'] = reg_dict['address']
+            df['default_value'] = reg_dict['default_value']
+            df['register_description'] = reg_dict['description']
 
-        return df
+            df = df[['register', 'address', 'default_value', 'register_description',
+                     'name', 'description', 'idx_lowest_bit', 'n_bits', 'value', 'read_only']]
+            df.rename(columns = {'name': 'element_name'}, inplace = True)
+
+            return df
+
+        except ImportError:
+            print('Need Pandas.')
 
 
 
