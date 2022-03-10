@@ -280,9 +280,14 @@ class I2C(Bus):
     def get_uPy_i2c(cls, id = -1, scl_pin_id = 5, sda_pin_id = 4, freq = 400000):
         import machine
 
-        return machine.I2C(scl = machine.Pin(scl_pin_id, machine.Pin.OUT),
-                           sda = machine.Pin(sda_pin_id),
-                           freq = freq)
+        # return machine.I2C(scl = machine.Pin(scl_pin_id, machine.Pin.OUT),
+        #                    sda = machine.Pin(sda_pin_id),
+        #                    freq = freq)
+
+        # I2C(-1, ...) is deprecated, use SoftI2C(...) instead
+        return machine.SoftI2C(scl = machine.Pin(scl_pin_id, machine.Pin.OUT),
+                               sda = machine.Pin(sda_pin_id),
+                               freq = freq)
 
 
     @classmethod
